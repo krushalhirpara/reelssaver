@@ -50,8 +50,11 @@ def extract_shortcode(url):
 # ──────────────────────────────────────────
 #  ROUTE: Get media info (before download)
 # ──────────────────────────────────────────
-@app.route('/api/info', methods=['POST'])
+@app.route('/api/info', methods=['GET', 'POST'])
 def get_info():
+    if request.method == 'GET':
+        return {"status": "ok"}
+
     data = request.get_json()
     url = data.get('url', '').strip()
 
