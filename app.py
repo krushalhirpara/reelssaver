@@ -112,6 +112,10 @@ from flask import send_from_directory
 @app.route('/ads.txt')
 def ads():
     return send_from_directory('.', 'ads.txt')
+
+@app.route('/sitemap.xml')
+def sitemap():
+    return send_from_directory('.', 'sitemap.xml')
     
 @app.route('/api/download/video', methods=['POST'])
 def download_video():
