@@ -106,6 +106,13 @@ def get_info():
 # ──────────────────────────────────────────
 #  ROUTE: Download Reel / Video
 # ──────────────────────────────────────────
+
+from flask import send_from_directory 
+
+@app.route('/ads.txt')
+def ads():
+    return send_from_directory('.', 'ads.txt')
+    
 @app.route('/api/download/video', methods=['POST'])
 def download_video():
     data = request.get_json()
