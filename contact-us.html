@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact Us — Reelssaver</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #08080f;
+      --surface: #111118;
+      --card: #16161f;
+      --border: #242436;
+      --accent1: #f7971e;
+      --accent2: #ff5e62;
+      --accent3: #a78bfa;
+      --accent4: #34d399;
+      --text: #eeeeff;
+      --muted: #5a5a7a;
+      --glow1: rgba(247, 151, 30, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(167, 139, 250, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(167, 139, 250, 0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-top {
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 400px;
+      background: radial-gradient(ellipse at center, rgba(247, 151, 30, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 18px 100px;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.45rem;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      box-shadow: 0 0 18px var(--glow1);
+    }
+
+    .logo-text {
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* CONTENT */
+    .content-hero {
+      text-align: center;
+      padding: 60px 0 40px;
+    }
+
+    .content-hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2rem, 6vw, 3.2rem);
+      margin-bottom: 15px;
+      letter-spacing: -1.5px;
+    }
+
+    .grad-text {
+      background: linear-gradient(90deg, var(--accent1) 0%, var(--accent2) 50%, var(--accent3) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .policy-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+      animation: fadeUp .4s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--accent1);
+    }
+
+    p {
+      line-height: 1.7;
+      color: var(--text);
+      margin-bottom: 15px;
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+
+    .contact-box {
+      text-align: center;
+      padding: 40px;
+      background: linear-gradient(135deg, rgba(247, 151, 30, 0.05), rgba(255, 94, 98, 0.05));
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      margin-top: 20px;
+    }
+
+    .contact-email {
+      font-weight: 700;
+      color: var(--accent2);
+      text-decoration: none;
+      font-size: 1.3rem;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 60px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 30px;
+      transition: color .2s;
+    }
+
+    .back-link:hover {
+      color: var(--accent1);
+    }
+
+    @media(max-width:600px) {
+      .policy-card {
+        padding: 20px;
+      }
+
+      .content-hero {
+        padding: 40px 0 30px;
+      }
+
+      .contact-email {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="glow-top"></div>
+  <div class="wrap">
+
+    <header>
+      <a href="/" class="logo">
+        <div class="logo-icon">🎬</div>
+        <span class="logo-text">ReelsSaver</span>
+      </a>
+    </header>
+
+    <div class="content-hero">
+      <a href="/" class="back-link">← Back to Home</a>
+      <h1><span class="grad-text">Contact Us</span></h1>
+      <p style="color:var(--muted);max-width:600px;margin:0 auto;">Thank you for visiting Reelssaver! We are always
+        striving to improve our tool and provide the best possible experience for our users.</p>
+    </div>
+
+    <div class="policy-card">
+      <p>Whether you have a question about how to use the downloader, need to report a technical bug, have a business
+        proposal regarding our advertising, or want to submit a suggestion, we are here to listen.</p>
+    </div>
+
+    <div class="policy-card">
+      <h2>How to Reach Us</h2>
+      <p>The best and fastest way to get in touch with our team is via email. Please send your inquiries to:</p>
+      <div class="contact-box">
+        <a href="mailto:reelssaver12@gmail.com" class="contact-email">reelssaver12@gmail.com</a>
+      </div>
+    </div>
+
+    <div class="policy-card">
+      <h2>What to Include in Your Email</h2>
+      <p>To help us assist you as quickly as possible, please include relevant details in your message:</p>
+      <p><strong>For Bug Reports:</strong> Describe the issue you are facing, the device/browser you are using, and the
+        link you were trying to download.</p>
+      <p><strong>For General Support:</strong> Clearly state your question or concern in the subject line.</p>
+      <p><strong>For Copyright/Takedown Requests:</strong> If you are a content owner and have concerns about your
+        media, please provide the specific URLs and proof of ownership so we can guide you appropriately.</p>
+    </div>
+
+    <footer>
+      <strong
+        style="font-family:'Syne',sans-serif;font-size:1rem;background:linear-gradient(90deg,var(--accent1),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">ReelsSaver</strong><br>
+      <a href="/privacy-policy" style="color:var(--muted);text-decoration:none;transition:color .2s;"
+        onmouseover="this.style.color='var(--accent1)'" onmouseout="this.style.color='var(--muted)'">Privacy Policy</a>
+      · <a href="/terms-conditions" style="color:var(--muted);text-decoration:none;transition:color .2s;"
+        onmouseover="this.style.color='var(--accent1)'" onmouseout="this.style.color='var(--muted)'">Terms &
+        Conditions</a> · <a href="/contact-us" style="color:var(--muted);text-decoration:none;transition:color .2s;"
+        onmouseover="this.style.color='var(--accent1)'" onmouseout="this.style.color='var(--muted)'">Contact Us</a><br>
+      © 2024 · Personal use only · Respect content creators
+    </footer>
+
+  </div>
+</body>
+
+</html>

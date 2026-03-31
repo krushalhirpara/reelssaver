@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ReelsSaver — Instagram Downloader</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#08080f;--surface:#1c1c2d;--card:#252538;--border:#454569;
+  --accent1:#f7971e;--accent2:#ff5e62;--accent3:#a78bfa;--accent4:#34d399;
+  --text:#ffffff;--muted:#9999bb;--glow1:rgba(247,151,30,0.35);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(167,139,250,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,0.025) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0;
+}
+.glow-top{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse at center,rgba(247,151,30,0.1) 0%,transparent 70%);pointer-events:none;z-index:0;}
+.wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:0 18px 100px;}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:22px 0;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:1.45rem;text-decoration:none;}
+.logo-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:grid;place-items:center;font-size:1rem;box-shadow:0 0 18px var(--glow1);}
+.logo-text{background:linear-gradient(90deg,var(--accent1),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.hdr-pill{font-size:0.7rem;font-weight:600;letter-spacing:0.5px;padding:4px 11px;border-radius:20px;}
+.hdr-free{background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);color:var(--accent4);}
+.hdr-nologin{background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.25);color:var(--accent3);}
+
+/* HERO */
+.hero{text-align:center;padding:44px 0 32px;}
+.hero-pill{display:inline-flex;align-items:center;gap:6px;font-size:0.74rem;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent1);background:rgba(247,151,30,0.08);border:1px solid rgba(247,151,30,0.2);padding:5px 14px;border-radius:20px;margin-bottom:18px;}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.9rem,5.5vw,3.1rem);line-height:1.1;letter-spacing:-1.5px;margin-bottom:12px;}
+.grad-text{background:linear-gradient(90deg,var(--accent1) 0%,var(--accent2) 50%,var(--accent3) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.hero p{color:var(--muted);font-size:0.97rem;line-height:1.65;max-width:480px;margin:0 auto;}
+
+/* STAT BAR */
+.stat-bar{display:flex;justify-content:center;margin:28px 0 36px;background:var(--card);border:1.5px solid var(--border);border-radius:16px;overflow:hidden;flex-wrap:nowrap;}
+.stat-item{flex:1;min-width:110px;padding:18px 14px;text-align:center;border-right:1px solid var(--border);transition:background .2s;}
+.stat-item:last-child{border-right:none;}
+.stat-item:hover{background:rgba(247,151,30,0.04);}
+.stat-num{font-family:'Syne',sans-serif;font-weight:800;font-size:1.55rem;background:linear-gradient(135deg,var(--accent1),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:5px;}
+.stat-label{font-size:0.72rem;color:var(--muted);font-weight:500;}
+
+/* TABS */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;}
+.tab-btn{display:flex;align-items:center;gap:7px;padding:10px 22px;border-radius:50px;font-size:0.87rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);transition:all .2s;font-family:'DM Sans',sans-serif;}
+.tab-btn:hover{border-color:var(--accent1);color:var(--accent1);}
+.tab-btn.active{background:linear-gradient(135deg,var(--accent1),var(--accent2));border-color:transparent;color:#fff;box-shadow:0 0 20px var(--glow1);}
+
+/* CARD */
+.card{background:linear-gradient(145deg, var(--card), #2d2d44);border:2px solid var(--border);border-radius:20px;padding:26px;box-shadow:0 12px 48px rgba(0,0,0,0.5), 0 0 20px rgba(167,139,250,0.05);transition:all .30s cubic-bezier(0.4, 0, 0.2, 1);margin-bottom:20px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(247,151,30,0.12),transparent);pointer-events:none;}
+.card:hover{border-color:var(--accent1);transform:translateY(-2px);box-shadow:0 16px 64px rgba(0,0,0,0.6), 0 0 30px rgba(247,151,30,0.15);}
+.card:focus-within{border-color:var(--accent1);box-shadow:0 16px 64px rgba(0,0,0,0.7), 0 0 40px var(--glow1);}
+.input-label{display:block;font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.input-row{display:flex;gap:10px;}
+.url-input{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;outline:none;transition:border-color .2s;min-width:0;}
+.url-input:focus{border-color:var(--accent1);}
+.url-input::placeholder{color:var(--muted);}
+.paste-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;color:var(--muted);cursor:pointer;font-size:0.82rem;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;flex-shrink:0;}
+.paste-btn:hover{border-color:var(--accent3);color:var(--accent3);}
+.main-btn{width:100%;margin-top:14px;padding:15px;border-radius:14px;background:linear-gradient(135deg,var(--accent1),var(--accent2));border:none;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;letter-spacing:0.3px;transition:all .25s;box-shadow:0 4px 24px var(--glow1);display:flex;align-items:center;justify-content:center;gap:8px;}
+.main-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px var(--glow1);}
+.main-btn:active{transform:translateY(0);}
+.main-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* MSG */
+.msg{padding:13px 16px;border-radius:12px;font-size:0.87rem;margin-top:12px;display:none;animation:fadeUp .3s ease;line-height:1.6;}
+.msg-error{background:rgba(255,94,98,0.1);border:1px solid rgba(255,94,98,0.25);color:#ff9a9a;}
+.msg-success{background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);color:#6ee7b7;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* PREVIEW */
+.preview-card{display:none;animation:fadeUp .3s ease;}
+.preview-inner{display:flex;gap:18px;align-items:flex-start;}
+.preview-thumb{width:100px;height:100px;border-radius:13px;object-fit:cover;border:2px solid var(--border);flex-shrink:0;background:var(--surface);}
+.preview-info{flex:1;min-width:0;}
+.preview-type{display:inline-flex;align-items:center;gap:5px;font-size:0.7rem;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;padding:4px 10px;border-radius:20px;margin-bottom:8px;}
+.type-reel{background:rgba(247,151,30,0.12);border:1px solid rgba(247,151,30,0.25);color:var(--accent1);}
+.type-video{background:rgba(255,94,98,0.12);border:1px solid rgba(255,94,98,0.25);color:var(--accent2);}
+.type-photo{background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);color:var(--accent4);}
+.preview-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.97rem;margin-bottom:4px;line-height:1.3;word-break:break-word;}
+.preview-user{font-size:0.82rem;color:var(--muted);margin-bottom:5px;}
+.preview-desc{font-size:0.8rem;color:var(--muted);line-height:1.5;word-break:break-word;}
+
+/* DL BUTTONS */
+.dl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-top:16px;}
+.dl-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 14px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;}
+.dl-video{background:linear-gradient(135deg,#f7971e,#ff5e62);color:#fff;box-shadow:0 4px 16px rgba(247,151,30,0.3);}
+.dl-photo{background:linear-gradient(135deg,#34d399,#059669);color:#fff;box-shadow:0 4px 16px rgba(52,211,153,0.3);}
+.dl-thumb{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;box-shadow:0 4px 16px rgba(167,139,250,0.3);}
+.dl-preview{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;box-shadow:0 4px 16px rgba(99,102,241,0.3);}
+.dl-btn:hover{transform:translateY(-2px);filter:brightness(1.08);}
+.dl-btn:active{transform:translateY(0);}
+
+/* PHOTO GRID */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:10px;margin-top:14px;}
+.photo-item{position:relative;border-radius:11px;overflow:hidden;border:2px solid var(--border);aspect-ratio:1;background:var(--surface);cursor:pointer;transition:border-color .2s;}
+.photo-item:hover{border-color:var(--accent4);}
+.photo-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-dl-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;}
+.photo-item:hover .photo-dl-overlay{opacity:1;}
+
+/* INFO SECTIONS */
+.info-section{margin-top:60px;}
+.section-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;text-align:center;margin-bottom:10px;letter-spacing:-0.5px;}
+.section-sub{text-align:center;color:var(--muted);font-size:0.88rem;margin-bottom:26px;line-height:1.6;}
+
+/* Steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+.step-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:22px;text-align:center;transition:border-color .2s;}
+.step-card:hover{border-color:rgba(247,151,30,0.3);}
+.step-num{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;margin:0 auto 12px;box-shadow:0 4px 12px var(--glow1);}
+.step-card h3{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:6px;}
+.step-card p{font-size:0.79rem;color:var(--muted);line-height:1.55;}
+
+/* Feature grid */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px;}
+.feat-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:20px;display:flex;gap:14px;align-items:flex-start;transition:border-color .2s;}
+.feat-card:hover{border-color:rgba(167,139,250,0.3);}
+.feat-icon{width:40px;height:40px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-size:1.1rem;}
+.fi1{background:rgba(247,151,30,0.12);}
+.fi2{background:rgba(52,211,153,0.12);}
+.fi3{background:rgba(167,139,250,0.12);}
+.fi4{background:rgba(99,102,241,0.12);}
+.fi5{background:rgba(96,165,250,0.12);}
+.fi6{background:rgba(255,94,98,0.12);}
+.feat-body h4{font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;margin-bottom:4px;}
+.feat-body p{font-size:0.78rem;color:var(--muted);line-height:1.5;}
+
+/* FAQ */
+.faq-list{display:flex;flex-direction:column;gap:10px;}
+.faq-item{background:var(--card);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;}
+.faq-q{padding:16px 20px;font-weight:600;font-size:0.88rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;transition:background .2s;user-select:none;}
+.faq-q:hover{background:rgba(255,255,255,0.02);}
+.faq-arrow{transition:transform .25s;flex-shrink:0;color:var(--muted);font-size:1.1rem;}
+.faq-item.open .faq-arrow{transform:rotate(180deg);color:var(--accent1);}
+.faq-item.open .faq-q{color:var(--accent1);}
+.faq-a{padding:0 20px;max-height:0;overflow:hidden;font-size:0.82rem;color:var(--muted);line-height:1.65;transition:max-height .3s ease,padding .3s ease;}
+.faq-item.open .faq-a{max-height:200px;padding:0 20px 16px;}
+
+/* Overlay */
+.loading-overlay{position:fixed;inset:0;background:rgba(8,8,15,0.85);display:none;align-items:center;justify-content:center;z-index:999;backdrop-filter:blur(4px);}
+.loading-box{background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:36px 44px;text-align:center;max-width:90vw;}
+.big-spinner{width:44px;height:44px;margin:0 auto 18px;border:3px solid var(--border);border-top-color:var(--accent1);border-radius:50%;animation:spin .8s linear infinite;}
+.loading-box p{font-family:'Syne',sans-serif;font-weight:600;font-size:0.95rem;}
+.loading-box small{color:var(--muted);font-size:0.77rem;margin-top:6px;display:block;}
+
+/* Footer */
+footer{text-align:center;padding:28px 0;border-top:1px solid var(--border);margin-top:60px;color:var(--muted);font-size:0.8rem;line-height:1.9;}
+footer span{color:var(--accent2);}
+
+/* MOBILE */
+@media(max-width:600px){
+  .input-row{flex-direction:column;}
+  .preview-inner{flex-direction:column;}
+  .preview-thumb{width:100%;height:200px;}
+  .dl-grid{grid-template-columns:1fr 1fr;}
+  .stat-num{font-size:1.15rem;}
+  .stat-item{padding:12px 4px;min-width:0;}
+  .stat-label{font-size:0.65rem;white-space:nowrap;}
+  .loading-box{padding:28px 22px;}
+  header{padding:16px 0;}
+  .hero{padding:32px 0 22px;}
+}
+@media(max-width:380px){
+  .tab-btn{padding:9px 13px;font-size:0.82rem;}
+  .dl-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="glow-top"></div>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <a href="#" class="logo">
+      <div class="logo-icon">🎬</div>
+      <span class="logo-text">ReelsSaver</span>
+    </a>
+    <div class="header-right">
+      <span class="hdr-pill hdr-free">✓ Free</span>
+      <span class="hdr-pill hdr-nologin">🔒 No Login</span>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-pill">⚡ Fast Instagram Downloader</div>
+    <h1>Save Instagram<br><span class="grad-text">Reels, Posts & Thumbnails</span></h1>
+    <p>Paste any public Instagram link and instantly download Reels, Photos, Videos or Reel Thumbnails — no account needed.</p>
+  </div>
+
+  <!-- STAT BAR -->
+  <div class="stat-bar">
+    <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Free Forever</div></div>
+    <div class="stat-item"><div class="stat-num">HD</div><div class="stat-label">High Quality</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="reel" onclick="setTab('reel',this)">🎬 Reel</button>
+    <button class="tab-btn" data-tab="post" onclick="setTab('post',this)">📁 Post</button>
+    <button class="tab-btn" data-tab="thumbnail" onclick="setTab('thumbnail',this)">🖼️ Reel Thumbnail</button>
+  </div>
+
+  <!-- INPUT CARD -->
+  <div class="card" id="inputCard">
+    <label class="input-label" id="inputLabel">Paste Reel URL</label>
+    <div class="input-row">
+      <input type="url" id="urlInput" class="url-input"
+        placeholder="https://www.instagram.com/reel/..."
+        onkeydown="if(event.key==='Enter') startDownload()"/>
+      <button class="paste-btn" onclick="pasteURL()">📋 Paste</button>
+    </div>
+    <button class="main-btn" id="fetchBtn" onclick="startDownload()">
+      <div class="spinner" id="fetchSpinner"></div>
+      <span id="fetchBtnText">⬇️ Download High Quality</span>
+    </button>
+    <div class="msg msg-error" id="errorMsg"></div>
+    <div class="msg msg-success" id="successMsg"></div>
+  </div>
+
+  <!-- PREVIEW CARD -->
+  <div class="card preview-card" id="previewCard">
+    <div class="preview-inner">
+      <img id="previewThumb" class="preview-thumb" src="" alt="thumbnail"/>
+      <div class="preview-info">
+        <div class="preview-type type-reel" id="previewType">🎬 Reel</div>
+        <div class="preview-title" id="previewTitle">Loading...</div>
+        <div class="preview-user" id="previewUser"></div>
+        <div class="preview-desc" id="previewDesc"></div>
+      </div>
+    </div>
+    <div class="dl-grid" id="dlGrid"></div>
+    <div id="photoGrid" class="photo-grid" style="display:none;"></div>
+  </div>
+
+  <!-- HOW TO USE -->
+  <div class="info-section">
+    <div class="section-title">How to Use ReelsSaver?</div>
+    <div class="section-sub">Download in 3 simple steps — no account required</div>
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3>Copy Instagram Link</h3>
+        <p>Open any public Reel, Post, or Video in the Instagram app. Tap the 3 dots → select "Copy Link".</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3>Select the Right Tab</h3>
+        <p>Select the 🎬 Reel tab for reels, 📁 Post tab for photo/video posts, and 🖼️ Reel Thumbnail tab for thumbnails only.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3>Download Now!</h3>
+        <p>Paste the URL and press the "Download High Quality" button. Video, Photo, or Thumbnail — whatever you need will download instantly.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="info-section">
+    <div class="section-title">ReelsSaver Features</div>
+    <div class="section-sub">What can you download?</div>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-icon fi1">🎬</div>
+        <div class="feat-body">
+          <h4>Instagram Reels</h4>
+          <p>Download any public Reel in HD quality. Use the 🎬 Reel tab for URLs in /reel/ format.</p>
+        </div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon fi2">📁</div>
+        <div class="feat-body">
+          <h4>Posts — Photo & Video</h4>
+          <p>Download photos, videos, and carousels (multiple photos) from /p/ format links using the 📁 Post tab.</p>
+        </div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon fi3">🖼️</div>
+        <div class="feat-body">
+          <h4>Reel Thumbnails</h4>
+          <p>Download any Reel's cover image separately in HD resolution (.jpg format). Use the 🖼️ Reel Thumbnail tab.</p>
+        </div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon fi4">▶️</div>
+        <div class="feat-body">
+          <h4>Video Preview</h4>
+          <p>Preview Reels or Post videos before downloading — they will play directly in the site's player.</p>
+        </div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon fi5">⭐</div>
+        <div class="feat-body">
+          <h4>High Quality Download</h4>
+          <p>All downloads are automatically in the best available quality — for videos, photos, and thumbnails.</p>
+        </div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon fi6">🔓</div>
+        <div class="feat-body">
+          <h4>No Login, Completely Free</h4>
+          <p>No account creation or payment required. Just paste the URL and download.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="info-section">
+    <div class="section-title">Frequently Asked Questions</div>
+    <div class="section-sub">Have a question? Find answers below.</div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Can I download posts from private accounts? <span class="faq-arrow">▾</span></div>
+        <div class="faq-a">No, ReelsSaver only works for public Instagram posts. Private account posts are not publicly accessible, so they cannot be downloaded.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Why do I get an "Invalid URL" error? <span class="faq-arrow">▾</span></div>
+        <div class="faq-a">It is important to select the correct tab. Use the 🎬 Reel tab for Reel URLs (/reel/) and the 📁 Post tab for Post URLs (/p/). Pasting a URL into the wrong tab will cause an error.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Can I download carousels (multiple photos)? <span class="faq-arrow">▾</span></div>
+        <div class="faq-a">Yes! Paste the /p/ link in the 📁 Post tab and click "Download Photo(s)". When there are multiple photos, a grid will appear — tap on any photo to download it individually.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">How do I download a video post in the Post tab? <span class="faq-arrow">▾</span></div>
+        <div class="faq-a">Paste the URL in the 📁 Post tab. Both "Download Video" and "Download Photo(s)" buttons will appear. Click "Download Video" for videos and "Download Photo(s)" for photos.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What formats are the downloads in? <span class="faq-arrow">▾</span></div>
+        <div class="faq-a">Videos are downloaded in .mp4 format, photos in .jpg, and thumbnails in .jpg or .webp — all in the best available quality.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <strong style="font-family:'Syne',sans-serif;font-size:1rem;background:linear-gradient(90deg,var(--accent1),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">ReelsSaver</strong><br>
+    Made with <span>♥</span> · Personal use only · <a href="/privacy-policy" style="color:var(--muted);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='var(--accent1)'" onmouseout="this.style.color='var(--muted)'">Privacy Policy</a> · <a href="/terms-conditions" style="color:var(--muted);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='var(--accent1)'" onmouseout="this.style.color='var(--muted)'">Terms & Conditions</a> · <a href="/contact-us" style="color:var(--muted);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='var(--accent1)'" onmouseout="this.style.color='var(--muted)'">Contact Us</a> · Respect content creators<br>
+    <span style="font-size:0.72rem;opacity:0.55;">ReelsSaver is not affiliated with Instagram. For use on public posts only.</span>
+  </footer>
+
+</div>
+
+<!-- OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="big-spinner"></div>
+    <p id="loadingText">Downloading...</p>
+    <small>Please wait — do not close the page</small>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:5000';
+let currentTab = 'reel';
+
+const TAB_CFG = {
+  reel:      { label:'Paste Reel URL',         placeholder:'https://www.instagram.com/reel/...',  btn:'⬇️ Download High Quality' },
+  post:      { label:'Paste Post URL (/p/)',   placeholder:'https://www.instagram.com/p/...',     btn:'⬇️ Download High Quality' },
+  thumbnail: { label:'Paste Reel URL',         placeholder:'https://www.instagram.com/reel/...', btn:'⬇️ Download Thumbnail' },
+};
+
+function setTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const c = TAB_CFG[tab];
+  document.getElementById('inputLabel').textContent   = c.label;
+  document.getElementById('urlInput').placeholder     = c.placeholder;
+  document.getElementById('fetchBtnText').textContent = c.btn;
+  document.getElementById('urlInput').value = '';
+  hidePreview(); hideMessages();
+}
+
+async function pasteURL() {
+  try { document.getElementById('urlInput').value = await navigator.clipboard.readText(); }
+  catch { document.getElementById('urlInput').focus(); }
+}
+
+function showError(msg) { const e=document.getElementById('errorMsg'); e.innerHTML=msg; e.style.display='block'; document.getElementById('successMsg').style.display='none'; }
+function showSuccess(msg) { const e=document.getElementById('successMsg'); e.textContent='✅ '+msg; e.style.display='block'; document.getElementById('errorMsg').style.display='none'; }
+function hideMessages() { document.getElementById('errorMsg').style.display='none'; document.getElementById('successMsg').style.display='none'; }
+function hidePreview() { document.getElementById('previewCard').style.display='none'; const v=document.getElementById('videoPlayerWrap'); if(v) v.remove(); }
+function setLoading(on) {
+  document.getElementById('fetchBtn').disabled = on;
+  document.getElementById('fetchSpinner').style.display = on ? 'block' : 'none';
+  document.getElementById('fetchBtnText').textContent = on ? 'Please wait...' : TAB_CFG[currentTab].btn;
+}
+function showOverlay(txt) { document.getElementById('loadingText').textContent=txt; document.getElementById('loadingOverlay').style.display='flex'; }
+function hideOverlay() { document.getElementById('loadingOverlay').style.display='none'; }
+
+function validateURL(url) {
+  if (!url) return 'Please paste a URL.';
+  if (!url.includes('instagram.com')) return 'Please paste a valid Instagram URL.';
+  const isReel = /instagram\.com\/(reel|reels|tv)\//i.test(url);
+  const isPost = /instagram\.com\/p\//i.test(url);
+  if (!isReel && !isPost) return '❌ URL format is invalid. Paste a /reel/ or /p/ Instagram link.';
+  if (currentTab==='reel' && isPost) return '❌ This is a Post URL. Select the <b>📁 Post</b> tab.';
+  if (currentTab==='post' && isReel) return '❌ This is a Reel URL. Select the <b>🎬 Reel</b> tab.';
+  if (currentTab==='thumbnail' && isPost) return '❌ Photo posts do not have thumbnails. Use a Reel (/reel/) URL.';
+  return null;
+}
+
+async function startDownload() {
+  const url = document.getElementById('urlInput').value.trim();
+  hideMessages(); hidePreview();
+  const err = validateURL(url);
+  if (err) { showError(err); return; }
+  setLoading(true);
+  try {
+    const res  = await fetch(`${API}/api/info`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url}) });
+    const data = await res.json();
+    if (!data.success) { showError(data.error||'Info fetch failed'); return; }
+    renderPreview(data);
+  } catch { showError('❌ Could not connect to server. Check if <code style="font-size:0.8rem">python app.py</code> is running.'); }
+  finally { setLoading(false); }
+}
+
+let _lastInfo = null;
+let _carouselNodes = [];
+
+// ── RENDER PREVIEW CARD ──
+function renderPreview(data) {
+  _lastInfo = data;
+
+  const fallback = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23242436" width="100" height="100" rx="12"/><text x="50" y="58" text-anchor="middle" font-size="28">🎬</text></svg>';
+  const thumb = document.getElementById('previewThumb');
+  thumb.src = data.thumbnail || fallback;
+  thumb.onerror = () => { thumb.src = fallback; };
+
+  const typeMap = {
+    reel:['🎬 Reel','type-reel'], video:['📹 Video','type-video'],
+    photo:['🖼️ Photo','type-photo'], photo_or_video:['📁 Post','type-photo'],
+    carousel:['🖼️ Carousel','type-photo'],
+  };
+  const [tl, tc] = typeMap[data.type] || ['📁 Post','type-photo'];
+  const te = document.getElementById('previewType');
+  te.textContent = tl; te.className = 'preview-type ' + tc;
+  document.getElementById('previewTitle').textContent = data.title || 'Instagram Post';
+  document.getElementById('previewUser').textContent  = data.uploader ? '@' + data.uploader : '';
+  document.getElementById('previewDesc').textContent  = (data.description || '').slice(0, 180);
+
+  // Reset
+  const pg = document.getElementById('photoGrid'); pg.style.display = 'none'; pg.innerHTML = '';
+  const vw = document.getElementById('videoPlayerWrap'); if (vw) vw.remove();
+
+  // ONE download button per tab
+  const grid = document.getElementById('dlGrid');
+  if (currentTab === 'reel') {
+    grid.innerHTML = `<button class="dl-btn dl-video" onclick="downloadVideo()">⬇️ Download Reel</button>`;
+  } else if (currentTab === 'post') {
+    grid.innerHTML = `<button class="dl-btn dl-video" onclick="handlePostDownload()">⬇️ Download</button>`;
+  } else if (currentTab === 'thumbnail') {
+    grid.innerHTML = `<button class="dl-btn dl-thumb" onclick="downloadThumbnail()">⬇️ Download Thumbnail</button>`;
+  }
+
+  document.getElementById('previewCard').style.display = 'block';
+  document.getElementById('previewCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // AUTO PREVIEW — start in background for all tabs
+  setTimeout(() => autoPreview(data), 300);
+}
+
+// ── AUTO PREVIEW ROUTER ──
+async function autoPreview(data) {
+  if (currentTab === 'reel') {
+    // Reel: always video preview
+    await startVideoPreview();
+
+  } else if (currentTab === 'post') {
+    const type = data.type;
+    if (type === 'video') {
+      // Single video post → video preview
+      await startVideoPreview();
+    } else {
+      // Photo / Carousel — pass preloaded nodes if available
+      await fetchAndShowPostMedia(data.nodes || null);
+    }
+
+  } else if (currentTab === 'thumbnail') {
+    // Thumbnail tab: show thumbnail image as large preview
+    showThumbnailPreview(data.thumbnail);
+  }
+}
+
+// ── THUMBNAIL LARGE PREVIEW (proxied to avoid CDN blocking) ──
+async function showThumbnailPreview(thumbUrl) {
+  if (!thumbUrl) return;
+  const old = document.getElementById('videoPlayerWrap'); if (old) old.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'videoPlayerWrap';
+  wrap.style.cssText = 'margin-top:16px;border-radius:14px;overflow:hidden;border:2px solid var(--border);background:var(--surface);text-align:center;';
+  wrap.innerHTML = `<div style="padding:28px;text-align:center;color:var(--muted);font-size:0.86rem;">
+    <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent3);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;"></div>
+    Thumbnail is loading...
+  </div>`;
+  document.getElementById('previewCard').appendChild(wrap);
+
+  try {
+    const res = await fetch(`${API}/api/proxy/image`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: thumbUrl, index: 0 })
+    });
+    if (!res.ok) throw new Error();
+    const blobUrl = URL.createObjectURL(await res.blob());
+    wrap.innerHTML = `
+      <img src="${blobUrl}" alt="Thumbnail Preview"
+        style="width:100%;max-height:480px;object-fit:contain;display:block;border-radius:12px;"/>
+      <div style="padding:10px;font-size:0.8rem;color:var(--muted);">Thumbnail Preview — Save using the Download button</div>`;
+  } catch {
+    wrap.innerHTML = `
+      <img src="${thumbUrl}" alt="Thumbnail Preview"
+        style="width:100%;max-height:480px;object-fit:contain;display:block;border-radius:12px;"
+        onerror="this.parentElement.innerHTML='<div style=padding:16px;text-align:center;color:#ff9a9a;font-size:0.84rem;>⚠️ Preview could not be loaded.</div>'"/>
+      <div style="padding:10px;font-size:0.8rem;color:var(--muted);">Thumbnail Preview</div>`;
+  }
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── VIDEO PREVIEW (server proxy stream) ──
+async function startVideoPreview() {
+  const url = document.getElementById('urlInput').value.trim();
+  const old = document.getElementById('videoPlayerWrap'); if (old) old.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = 'videoPlayerWrap';
+  wrap.style.cssText = 'margin-top:16px;border-radius:14px;overflow:hidden;background:#0a0a0f;border:2px solid var(--border);';
+  wrap.innerHTML = `
+    <div style="padding:28px;text-align:center;color:var(--muted);font-size:0.86rem;line-height:1.8;">
+      <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent1);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;"></div>
+      <strong style="color:var(--text);">Video preview is being prepared...</strong><br>
+      May take 15–30 seconds ⏳
+    </div>`;
+  document.getElementById('previewCard').appendChild(wrap);
+
+  try {
+    const res  = await fetch(`${API}/api/prepare-preview`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    const data = await res.json();
+    if (!data.success) {
+      wrap.innerHTML = `<div style="padding:16px;text-align:center;color:#ff9a9a;font-size:0.84rem;">⚠️ Preview could not be loaded: ${data.error || 'Unknown error'}</div>`;
+      return;
+    }
+    wrap.innerHTML = `
+      <video controls autoplay playsinline
+        style="width:100%;max-height:480px;display:block;background:#000;">
+        <source src="${API}/api/stream/${data.token}" type="video/mp4"/>
+      </video>`;
+    wrap.querySelector('video').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch {
+    wrap.innerHTML = `<div style="padding:16px;text-align:center;color:#ff9a9a;font-size:0.84rem;">❌ Could not connect to server.</div>`;
+  }
+}
+
+// ── FETCH & SHOW POST MEDIA (photo/carousel) ──
+async function fetchAndShowPostMedia(preloadedNodes) {
+  const url = document.getElementById('urlInput').value.trim();
+  const old = document.getElementById('videoPlayerWrap'); if (old) old.remove();
+
+  const pg = document.getElementById('photoGrid');
+
+  // Use preloaded nodes if available — skip extra server call
+  if (preloadedNodes && preloadedNodes.length > 0) {
+    _carouselNodes = preloadedNodes;
+    pg.style.display = 'grid';
+    showCarouselGrid(preloadedNodes);
+    const pc = preloadedNodes.filter(n => n.type === 'photo').length;
+    const vc = preloadedNodes.filter(n => n.type === 'video').length;
+    let msg = `${preloadedNodes.length} item${preloadedNodes.length > 1 ? 's' : ''}`;
+    if (preloadedNodes.length > 1 && pc && vc) msg += ` (${pc} photos + ${vc} videos)`;
+    showSuccess(msg + ' — tap ⬇️ to download each!');
+    return;
+  }
+
+  // Fetch from server
+  pg.style.display = 'block';
+  pg.innerHTML = `<div style="padding:24px;text-align:center;color:var(--muted);font-size:0.86rem;grid-column:1/-1;">
+    <div style="width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent4);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px;"></div>
+    Post media is loading...
+  </div>`;
+
+  try {
+    const res = await fetch(`${API}/api/download/photo`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      pg.innerHTML = `<div style="padding:20px;text-align:center;color:#ff9a9a;font-size:0.84rem;grid-column:1/-1;">❌ ${data.error || 'Photo fetch failed'}</div>`;
+      return;
+    }
+
+    const nodes = data.nodes || [];
+    if (nodes.length > 0) {
+      _carouselNodes = nodes;
+      pg.style.display = 'grid';
+      showCarouselGrid(nodes);
+      const pc = nodes.filter(n => n.type === 'photo').length;
+      const vc = nodes.filter(n => n.type === 'video').length;
+      let msg = `${nodes.length} item${nodes.length > 1 ? 's' : ''}`;
+      if (nodes.length > 1 && pc && vc) msg += ` (${pc} photos + ${vc} videos)`;
+      showSuccess(msg + ' — tap ⬇️ to download each!');
+    } else {
+      pg.innerHTML = `<div style="padding:20px;text-align:center;color:#ff9a9a;font-size:0.84rem;grid-column:1/-1;">❌ No media found</div>`;
+    }
+  } catch(err) {
+    pg.innerHTML = `<div style="padding:20px;text-align:center;color:#ff9a9a;font-size:0.84rem;grid-column:1/-1;">❌ Post load failed. Please check the server.</div>`;
+  }
+}
+
+// ── MANUAL DOWNLOAD BUTTONS ──
+async function downloadVideo() {
+  const url = document.getElementById('urlInput').value.trim();
+  showOverlay('Video is downloading...');
+  try {
+    const res = await fetch(`${API}/api/download/video`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, quality: 'best' })
+    });
+    if (!res.ok) { const e = await res.json(); showError(e.error || 'Download failed'); return; }
+    triggerDownload(await res.blob(), 'reelssaver_video.mp4');
+    showSuccess('Video downloaded!');
+  } catch { showError('Download failed. Please check the server.'); }
+  finally { hideOverlay(); }
+}
+
+async function downloadThumbnail() {
+  const url = document.getElementById('urlInput').value.trim();
+  showOverlay('Thumbnail is downloading...');
+  try {
+    const res = await fetch(`${API}/api/download/thumbnail`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    if (!res.ok) { const e = await res.json(); showError(e.error || 'Thumbnail failed'); return; }
+    const blob = await res.blob();
+    triggerDownload(blob, `reelssaver_thumbnail.${blob.type.includes('png') ? 'png' : 'jpg'}`);
+    showSuccess('Thumbnail downloaded!');
+  } catch { showError('Thumbnail download failed.'); }
+  finally { hideOverlay(); }
+}
+
+async function handlePostDownload() {
+  if (_lastInfo?.type === 'video') {
+    await downloadVideo();
+  } else {
+    await fetchAndShowPostMedia(_lastInfo?.nodes || null);
+  }
+}
+
+// ── CAROUSEL GRID ──
+function showCarouselGrid(nodes) {
+  const grid = document.getElementById('photoGrid');
+  grid.style.display = 'grid';
+  const fallbackSvg = (emoji) => `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><rect fill='%23242436' width='140' height='140' rx='10'/><text x='70' y='78' text-anchor='middle' font-size='30'>${emoji}</text></svg>`;
+
+  grid.innerHTML = nodes.map((node, i) => {
+    const isVid = node.type === 'video';
+    return `
+    <div class="photo-item" id="carousel-item-${i}">
+      <img id="carousel-thumb-${i}"
+        src="${fallbackSvg(isVid ? '🎬' : '⏳')}"
+        alt="${isVid ? 'Video' : 'Photo'} ${i+1}"
+        style="width:100%;height:100%;object-fit:cover;display:block;"/>
+      ${isVid ? `<div style="position:absolute;top:7px;left:7px;background:rgba(0,0,0,0.75);border-radius:6px;padding:2px 7px;font-size:0.65rem;font-weight:700;color:#fff;letter-spacing:.5px;">▶ VIDEO</div>` : ''}
+      <div class="photo-dl-overlay" style="flex-direction:column;gap:6px;">
+        <span onclick="downloadCarouselItem(_carouselNodes[${i}])"
+          style="background:rgba(247,151,30,0.92);padding:7px 14px;border-radius:20px;font-size:0.79rem;font-weight:700;color:#fff;cursor:pointer;display:block;">
+          ⬇️ ${isVid ? 'Download Video' : 'Download Photo'}
+        </span>
+        ${isVid ? `<span onclick="previewCarouselVideoProxied(${i})"
+          style="background:rgba(99,102,241,0.92);padding:7px 14px;border-radius:20px;font-size:0.79rem;font-weight:700;color:#fff;cursor:pointer;display:block;">
+          ▶️ Preview
+        </span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Proxy-load thumbnails so CDN block doesn't affect previews
+  nodes.forEach((node, i) => {
+    const thumbUrl = node.thumb;
+    if (!thumbUrl) return;
+    fetch(`${API}/api/proxy/image`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: thumbUrl, index: i })
+    }).then(r => r.ok ? r.blob() : null)
+      .then(blob => {
+        if (!blob) return;
+        const img = document.getElementById(`carousel-thumb-${i}`);
+        if (img) img.src = URL.createObjectURL(blob);
+      }).catch(() => {});
+  });
+}
+
+// ── DOWNLOAD CAROUSEL ITEM ──
+async function downloadCarouselItem(node) {
+  const idx = node.index;
+  if (node.type === 'photo') {
+    showOverlay(`Downloading Photo ${idx+1}...`);
+    try {
+      const res = await fetch(`${API}/api/proxy/image`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: node.photo_url, index: idx })
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showError(e.error || 'Photo download failed'); return; }
+      triggerDownload(await res.blob(), `reelssaver_photo_${idx+1}.jpg`);
+      showSuccess(`Photo ${idx+1} downloaded!`);
+    } catch { showError('Photo download failed.'); }
+    finally { hideOverlay(); }
+  } else {
+    showOverlay(`Downloading Video ${idx+1}...`);
+    try {
+      const res = await fetch(`${API}/api/download/carousel-video`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ video_url: node.video_url, index: idx })
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showError(e.error || 'Video download failed'); return; }
+      triggerDownload(await res.blob(), `reelssaver_video_${idx+1}.mp4`);
+      showSuccess(`Video ${idx+1} downloaded!`);
+    } catch { showError('Video download failed.'); }
+    finally { hideOverlay(); }
+  }
+}
+
+// ── CAROUSEL VIDEO PREVIEW (proxy fetch so CDN blocked videos work) ──
+async function previewCarouselVideoProxied(idx) {
+  const node = _carouselNodes[idx];
+  if (!node || !node.video_url) return;
+
+  const old = document.getElementById('videoPlayerWrap'); if (old) old.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'videoPlayerWrap';
+  wrap.style.cssText = 'margin-top:14px;border-radius:14px;overflow:hidden;background:#000;border:2px solid var(--border);';
+  wrap.innerHTML = `<div style="padding:28px;text-align:center;color:var(--muted);font-size:0.86rem;">
+    <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent1);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;"></div>
+    Video preview is being prepared...
+  </div>`;
+  document.getElementById('photoGrid').after(wrap);
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  try {
+    // Download the carousel video via proxy and create a blob URL for preview
+    const res = await fetch(`${API}/api/download/carousel-video`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ video_url: node.video_url, index: idx })
+    });
+    if (!res.ok) throw new Error('proxy failed');
+    const blobUrl = URL.createObjectURL(await res.blob());
+    wrap.innerHTML = `
+      <video controls autoplay playsinline
+        style="width:100%;max-height:460px;display:block;background:#000;">
+        <source src="${blobUrl}" type="video/mp4"/>
+      </video>`;
+  } catch {
+    wrap.innerHTML = `<div style="padding:16px;text-align:center;color:#ff9a9a;font-size:0.84rem;">❌ Preview could not be loaded — ⬇️ Download and play locally.</div>`;
+  }
+}
+
+function previewCarouselVideo(videoUrl, idx) {
+  previewCarouselVideoProxied(idx);
+}
+
+// ── HELPERS ──
+async function proxyDownloadImage(imgUrl, idx) {
+  showOverlay(`Downloading Photo ${idx+1}...`);
+  try {
+    const res = await fetch(`${API}/api/proxy/image`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: imgUrl, index: idx })
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); showError(e.error || 'Download failed'); return; }
+    triggerDownload(await res.blob(), `reelssaver_photo_${idx+1}.jpg`);
+  } catch { showError('Image download failed.'); }
+  finally { hideOverlay(); }
+}
+
+function triggerDownload(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+function toggleFaq(el) { el.parentElement.classList.toggle('open'); }
+</script>
+</body>
+</html>
