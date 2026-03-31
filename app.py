@@ -536,6 +536,9 @@ def contact_us():
     return send_file(os.path.join(os.path.dirname(__file__), 'contact-us.html'))
 
 
+import os
+
 if __name__ == '__main__':
-    print("🚀 InstaGet Server starting on http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 10000))
+    print(f"🚀 InstaGet Server running on port {port}")
+    app.run(debug=False, host='0.0.0.0', port=port)
