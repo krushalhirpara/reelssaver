@@ -54,10 +54,10 @@ def is_instagram_url(url):
     return bool(re.match(pattern, url))
 
 
-def detect_type(url):
-    """Detect if URL is reel/video or photo post"""
-    if '/reel/' in url or '/reels/' in url or '/tv/' in url:
-        return 'video'
+def extract_shortcode(url):
+    """Reliably extract shortcode from any Instagram URL including ?img_index=1"""
+    url_clean = url.split('?')[0].split('#')[0].rstrip('/')
+    return url_clean.split('/')[-1]
     elif '/p/' in url:
         return 'photo_or_video'  # /p/ can be photo or video
     return 'unknown'
