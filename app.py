@@ -16,6 +16,21 @@ CORS(app)
 DOWNLOAD_DIR = os.path.join(os.path.dirname(__file__), "downloads")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
+# ── Cookies file for Instagram authentication (fixes rate-limit errors) ──
+COOKIES_FILE = os.path.join(os.path.dirname(__file__), "cookies.txt")
+
+def get_ydl_opts(extra=None):
+    """Base yt-dlp options — always includes cookies if file exists."""
+    opts = {
+        'quiet': True,
+        'no_warnings': True,
+    }
+    if os.path.exists(COOKIES_FILE):
+        opts['cookiefile'] = COOKIES_FILE
+    if extra:
+        opts.update(extra)
+    return opts
+
 # Auto cleanup: delete files older than 10 minutes
 def cleanup_old_files():
     while True:
@@ -39,22 +54,36 @@ def is_instagram_url(url):
     return bool(re.match(pattern, url))
 
 
-def extract_shortcode(url):
-    """Reliably extract shortcode from any Instagram URL format including ?img_index=1"""
-    # Remove query string and fragments
-    url_clean = url.split('?')[0].split('#')[0].rstrip('/')
-    # Last path segment is the shortcode
-    return url_clean.split('/')[-1]
+def detect_type(url):
+    """Detect if URL is reel/video or photo post"""
+    if '/reel/' in url or '/reels/' in url or '/tv/' in url:
+        return 'video'
+    elif '/p/' in url:
+        return 'photo_or_video'  # /p/ can be photo or video
+    return 'unknown'
+
+
+def _load_instaloader_session(L):
+    """Load Instagram session from cookies.txt into instaloader context."""
+    if not os.path.exists(COOKIES_FILE):
+        return
+    try:
+        import http.cookiejar
+        cj = http.cookiejar.MozillaCookieJar()
+        cj.load(COOKIES_FILE, ignore_discard=True, ignore_expires=True)
+        # Extract sessionid and csrftoken for instaloader
+        cookies = {c.name: c.value for c in cj if 'instagram.com' in c.domain}
+        if 'sessionid' in cookies:
+            L.context._session.cookies.update(cookies)
+    except Exception:
+        pass  # If cookies fail, continue without — may hit rate limit
 
 
 # ──────────────────────────────────────────
 #  ROUTE: Get media info (before download)
 # ──────────────────────────────────────────
-@app.route('/api/info', methods=['GET', 'POST'])
+@app.route('/api/info', methods=['POST'])
 def get_info():
-    if request.method == 'GET':
-        return {"status": "ok"}
-
     data = request.get_json()
     url = data.get('url', '').strip()
 
@@ -62,12 +91,7 @@ def get_info():
         return jsonify({'success': False, 'error': 'Invalid Instagram URL'}), 400
 
     try:
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'skip_download': True,
-            'extract_flat': False,
-        }
+        ydl_opts = get_ydl_opts({'skip_download': True, 'extract_flat': False})
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
 
@@ -84,9 +108,13 @@ def get_info():
             'url': url
         })
     except Exception as e:
-        # yt-dlp failed — might be a photo post, try instaloader
+        # yt-dlp failed — try instaloader with session cookie
         try:
-            L = instaloader.Instaloader()
+            L = instaloader.Instaloader(quiet=True, download_pictures=False,
+                download_videos=False, save_metadata=False,
+                download_geotags=False, download_comments=False)
+            # Load session from cookies.txt if available
+            _load_instaloader_session(L)
             shortcode = extract_shortcode(url)
             post = instaloader.Post.from_shortcode(L.context, shortcode)
             return jsonify({
@@ -106,17 +134,6 @@ def get_info():
 # ──────────────────────────────────────────
 #  ROUTE: Download Reel / Video
 # ──────────────────────────────────────────
-
-from flask import send_from_directory 
-
-@app.route('/ads.txt')
-def ads():
-    return send_from_directory('.', 'ads.txt')
-
-@app.route('/sitemap.xml')
-def sitemap():
-    return send_from_directory('.', 'sitemap.xml')
-    
 @app.route('/api/download/video', methods=['POST'])
 def download_video():
     data = request.get_json()
@@ -133,13 +150,11 @@ def download_video():
 
     fmt = 'bestvideo+bestaudio/best' if quality == 'best' else 'worstvideo+worstaudio/worst'
 
-    ydl_opts = {
+    ydl_opts = get_ydl_opts({
         'outtmpl': out_template,
         'format': fmt,
-        'quiet': True,
-        'no_warnings': True,
         'merge_output_format': 'mp4',
-    }
+    })
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -180,13 +195,11 @@ def download_thumbnail():
     os.makedirs(out_dir, exist_ok=True)
     out_template = os.path.join(out_dir, '%(id)s.%(ext)s')
 
-    ydl_opts = {
+    ydl_opts = get_ydl_opts({
         'outtmpl': out_template,
         'skip_download': True,
         'writethumbnail': True,
-        'quiet': True,
-        'no_warnings': True,
-    }
+    })
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -222,8 +235,8 @@ def download_thumbnail():
 
 
 # ──────────────────────────────────────────
-#  ROUTE: Download Photo(s) — yt-dlp based (no instaloader needed)
-#  Returns nodes list so frontend shows grid preview + download buttons
+#  ROUTE: Download Photo(s) via instaloader
+#  Returns image URLs; use /api/proxy/image to actually download
 # ──────────────────────────────────────────
 @app.route('/api/download/photo', methods=['POST'])
 def download_photo():
@@ -234,73 +247,42 @@ def download_photo():
     if not url or not is_instagram_url(url):
         return jsonify({'success': False, 'error': 'Invalid Instagram URL'}), 400
 
-    # Strip query params
     url_clean = url.split('?')[0].rstrip('/')
 
     try:
-        # Use yt-dlp to extract all media info (works for photo posts too)
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'skip_download': True,
-            'extract_flat': False,
-        }
+        # Primary: yt-dlp with cookies
+        ydl_opts = get_ydl_opts({'skip_download': True, 'extract_flat': False})
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url_clean, download=False)
 
         nodes = []
-
-        # Carousel / sidecar — multiple entries
         entries = info.get('entries') or []
         if entries:
             for i, entry in enumerate(entries):
                 ext = entry.get('ext', '')
                 is_vid = ext in ['mp4', 'webm'] or (entry.get('vcodec') not in [None, 'none', ''])
-                # Get best image/video URL
                 direct_url = entry.get('url', '')
                 thumb = entry.get('thumbnail', '')
                 if is_vid:
-                    nodes.append({
-                        'index': i,
-                        'type': 'video',
-                        'thumb': thumb,
-                        'photo_url': thumb,
-                        'video_url': direct_url,
-                    })
+                    nodes.append({'index': i, 'type': 'video', 'thumb': thumb,
+                                  'photo_url': thumb, 'video_url': direct_url})
                 else:
-                    # For photos, direct url IS the image
-                    nodes.append({
-                        'index': i,
-                        'type': 'photo',
-                        'thumb': direct_url or thumb,
-                        'photo_url': direct_url or thumb,
-                        'video_url': None,
-                    })
+                    nodes.append({'index': i, 'type': 'photo', 'thumb': direct_url or thumb,
+                                  'photo_url': direct_url or thumb, 'video_url': None})
         else:
-            # Single item
             ext = info.get('ext', '')
             is_vid = ext in ['mp4', 'webm'] or (info.get('vcodec') not in [None, 'none', ''])
             direct_url = info.get('url', '')
             thumb = info.get('thumbnail', '')
             if is_vid:
-                nodes.append({
-                    'index': 0,
-                    'type': 'video',
-                    'thumb': thumb,
-                    'photo_url': thumb,
-                    'video_url': direct_url,
-                })
+                nodes.append({'index': 0, 'type': 'video', 'thumb': thumb,
+                              'photo_url': thumb, 'video_url': direct_url})
             else:
-                nodes.append({
-                    'index': 0,
-                    'type': 'photo',
-                    'thumb': direct_url or thumb,
-                    'photo_url': direct_url or thumb,
-                    'video_url': None,
-                })
+                nodes.append({'index': 0, 'type': 'photo', 'thumb': direct_url or thumb,
+                              'photo_url': direct_url or thumb, 'video_url': None})
 
         if not nodes:
-            return jsonify({'success': False, 'error': 'No media found in this post'}), 404
+            return jsonify({'success': False, 'error': 'No media found'}), 404
 
         return jsonify({
             'success': True,
@@ -310,15 +292,13 @@ def download_photo():
         })
 
     except Exception as e:
-        # yt-dlp failed — fallback to instaloader
+        # Fallback: instaloader with session cookies
         try:
-            import requests as req_lib
             shortcode = extract_shortcode(url_clean)
-            L = instaloader.Instaloader(
-                quiet=True, download_pictures=False, download_videos=False,
-                download_video_thumbnails=False, download_geotags=False,
-                download_comments=False, save_metadata=False,
-            )
+            L = instaloader.Instaloader(quiet=True, download_pictures=False,
+                download_videos=False, download_video_thumbnails=False,
+                download_geotags=False, download_comments=False, save_metadata=False)
+            _load_instaloader_session(L)
             post = instaloader.Post.from_shortcode(L.context, shortcode)
             nodes = []
             if post.typename == 'GraphSidecar':
@@ -335,50 +315,10 @@ def download_photo():
             return jsonify({
                 'success': True,
                 'type': 'carousel' if len(nodes) > 1 else nodes[0]['type'],
-                'nodes': nodes,
-                'count': len(nodes),
+                'nodes': nodes, 'count': len(nodes),
             })
         except Exception as e2:
             return jsonify({'success': False, 'error': f'Photo fetch failed: {str(e2)}'}), 500
-
-
-# ──────────────────────────────────────────
-#  ROUTE: Download a single carousel video by its CDN URL
-# ──────────────────────────────────────────
-@app.route('/api/download/carousel-video', methods=['POST'])
-def download_carousel_video():
-    import requests as req_lib
-    data = request.get_json()
-    video_url = data.get('video_url', '').strip()
-    idx = int(data.get('index', 0))
-
-    if not video_url:
-        return jsonify({'success': False, 'error': 'No video URL provided'}), 400
-
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Referer': 'https://www.instagram.com/',
-            'Accept': '*/*',
-        }
-        r = req_lib.get(video_url, headers=headers, timeout=60, stream=True)
-        r.raise_for_status()
-
-        uid = str(uuid.uuid4())[:6]
-        file_path = os.path.join(DOWNLOAD_DIR, f'cvid_{uid}_{idx}.mp4')
-        with open(file_path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=65536):
-                if chunk:
-                    f.write(chunk)
-
-        return send_file(
-            file_path,
-            as_attachment=True,
-            download_name=f'reelssaver_video_{idx+1}.mp4',
-            mimetype='video/mp4'
-        )
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # ──────────────────────────────────────────
@@ -439,13 +379,11 @@ def prepare_preview():
     os.makedirs(out_dir, exist_ok=True)
     out_template = os.path.join(out_dir, 'video.%(ext)s')
 
-    ydl_opts = {
+    ydl_opts = get_ydl_opts({
         'outtmpl': out_template,
         'format': 'best[ext=mp4]/best',
-        'quiet': True,
-        'no_warnings': True,
         'merge_output_format': 'mp4',
-    }
+    })
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -550,9 +488,6 @@ def contact_us():
     return send_file(os.path.join(os.path.dirname(__file__), 'contact-us.html'))
 
 
-import os
-
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    print(f"🚀 InstaGet Server running on port {port}")
-    app.run(debug=False, host='0.0.0.0', port=port)
+    print("🚀 InstaGet Server starting on http://localhost:5000")
+    app.run(debug=True, host='0.0.0.0', port=5000)
