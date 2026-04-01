@@ -54,13 +54,14 @@ def is_instagram_url(url):
     return bool(re.match(pattern, url))
 
 
+import re
+
 def extract_shortcode(url):
-    """Reliably extract shortcode from any Instagram URL including ?img_index=1"""
-    url_clean = url.split('?')[0].split('#')[0].rstrip('/')
-    return url_clean.split('/')[-1]
-    elif '/p/' in url:
-        return 'photo_or_video'  # /p/ can be photo or video
-    return 'unknown'
+    try:
+        match = re.search(r"(?:instagram\.com\/(?:p|reel|reels)\/)([^\/\?\&]+)", url)
+        return match.group(1) if match else None
+    except Exception:
+        return None
 
 
 def _load_instaloader_session(L):
